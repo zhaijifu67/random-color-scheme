@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>宅爷的配色工具箱</title>
+		<script src="index/js/main.js"></script>
+		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
+			integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+			integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous">
+		</script>
+		<script>
+			window.onload = function() {
+				var result = document.getElementById("result");
+				result.innerHTML = "";
+			}
+			// 修改主色
+			function change_color_main(e) {
+				var w = document.createElement("input")
+				if (e.type == "color") {
+					e.parentElement.previousElementSibling.children[0].value = e.value;
+				} else {
+					e.parentElement.nextElementSibling.children[0].value = e.value;
+				}
+			}
+			// 随机
+			function random() {
+				let func = [random_1, random_close, random_square, random_triangle, random_complementary,
+					random_complementary_2
+				];
+				const randomIndex = Math.floor(Math.random() * func.length);
+				func[randomIndex]();
+			}
+			// 单色
+			function random_1() {
+				let setting = get_setting();
+				let newColors = [setting.main_hsl];
+				while (newColors.length < setting.colorLength) {
+					newColors.push(colorL_random(colorS_random(newColors[newColors.length - 1])));
+					newColors = uniqueColorHsl(newColors);
+				}
+				creat_color_div(hslArrToRgbArr(newColors));
+			}
+			// 近似色
+			function random_close() {
+				let setting = get_setting();
+				let newColors = [setting.main_hsl];
+				while (newColors.length < setting.colorLength) {
+					newColors.push(colorL_random(colorS_random(colorH_random(newColors[newColors.length - 1], 20, 20), 50)));
+					newColors = uniqueColorHsl(newColors);
+				}
+				creat_color_div(hslArrToRgbArr(newColors));
+			}
+			// 互补色
+			function random_complementary() {
+				let setting = get_setting();
+				let newColors = [setting.main_hsl];
+				while (newColors.length < setting.colorLength) {
+					newColors.push(colorL_random(colorS_random(colorH_random(newColors[Math.floor(Math.random() * newColors
+						.length)], 20, 180), 50), 50));
+					newColors = uniqueColorHsl(newColors);
+				}
+				newColors = newColors.sort(function(a, b) {
+					return a.h - b.h;
+				});
+				creat_color_div(hslArrToRgbArr(newColors));
+			}
+			// 分裂互补色
+			function random_complementary_2() {
+				let setting = get_setting();
+				let newColors = [setting.main_hsl];
+				newColors.push(colorL_random(colorS_random(colorH_random(newColors[0], 20, 150, false), 30), 50));
+				newColors.push(colorL_random(colorS_random(colorH_random(newColors[0], 20, -150, false), 30), 50));
+				while (newColors.length < setting.colorLength) {
+					newColors.push(colorL_random(colorS_random(colorH_random(newColors[Math.floor(Math.random() * newColors
+						.length)], 10), 50), 50));
+					newColors = uniqueColorHsl(newColors);
+				}
+				newColors = newColors.sort(function(a, b) {
+					return a.h - b.h;
+				});
+				creat_color_div(hslArrToRgbArr(newColors));
+			}
+			// 三角配色
+			function random_triangle() {
+				let setting = get_setting();
+				let newColors = [setting.main_hsl];
+				newColors.push(colorL_random(colorS_random(colorH_random(newColors[0], 20, 120, false), 50), 50));
+				newColors.push(colorL_random(colorS_random(colorH_random(newColors[0], 20, -120, false), 50), 50));
+				while (newColors.length < setting.colorLength) {
+					newColors.push(colorL_random(colorS_random(colorH_random(newColors[Math.floor(Math.random() * newColors
+						.length)], 10), 50), 50));
+					newColors = uniqueColorHsl(newColors);
+				}
+				newColors = newColors.sort(function(a, b) {
+					return a.h - b.h;
+				});
+				creat_color_div(hslArrToRgbArr(newColors));
+			}
+			// 四角配色
+			function random_square() {
+				let setting = get_setting();
+				let newColors = [setting.main_hsl];
+				newColors.push(colorL_random(colorS_random(colorH_random(newColors[0], 20, 90, false), 50), 50));
+				newColors.push(colorL_random(colorS_random(colorH_random(newColors[0], 20, -90, false), 50), 50));
+				newColors.push(colorL_random(colorS_random(colorH_random(newColors[0], 20, 180, false), 50), 50));
+				while (newColors.length < setting.colorLength) {
+					newColors.push(colorL_random(colorS_random(colorH_random(newColors[Math.floor(Math.random() * newColors
+						.length)], 10), 50), 50));
+					newColors = uniqueColorHsl(newColors);
+				}
+				newColors = newColors.sort(function(a, b) {
+					return a.h - b.h;
+				});
+				creat_color_div(hslArrToRgbArr(newColors));
+			}
+			// 设置
+			function get_setting() {
+				let setting = {};
+				setting.colorLength = parseInt(document.getElementById("colorNum").value);
+				setting.main_rgb = stringToRgb(document.getElementById("color_main").value);
+				setting.main_hsl = rgbToHsl(setting.main_rgb.r, setting.main_rgb.g, setting.main_rgb.b);
+				if (setting.main_hsl.s == 0) setting.main_hsl = colorH_random(setting.main_hsl);
+				return setting;
+			}
+
+			function hslArrToRgbArr(arr) {
+				let rgb = [];
+				for (let i = 0; i < arr.length; i++) {
+					rgb.push(hslToRgb(arr[i].h, arr[i].s, arr[i].l));
+				}
+				return rgb;
+			}
+
+			function colorH_random(color_hsl, range = 360, first = 0, randomFirst = true) {
+				let h = color_hsl.h;
+				if (randomFirst) {
+					if (Math.random() < 0.5) h += first;
+					else h -= first;
+				} else {
+					h += first;
+				}
+				h = Math.floor(Math.random() * range) + 1 - range / 2 + h;
+				if (h > 360) h -= 360;
+				if (h < 0) h += 360;
+				return {
+					h: h,
+					s: color_hsl.s,
+					l: color_hsl.l
+				}
+			}
+
+			function colorS_random(color_hsl, range = 100) {
+				let n = color_hsl.s;
+				let high = Math.min(n + range / 2, 100);
+				let low = Math.max(n - range / 2, 0);
+				while (n == color_hsl.s) {
+					n = Math.floor(Math.random() * (high - low)) + low + 1;
+				}
+				return {
+					h: color_hsl.h,
+					s: n,
+					l: color_hsl.l
+				}
+			}
+
+			function colorL_random(color_hsl, range = 100) {
+				let n = color_hsl.l;
+				let high = Math.min(n + range / 2, 100);
+				let low = Math.max(n - range / 2, 0);
+				while (n == color_hsl.l) {
+					n = Math.floor(Math.random() * (high - low)) + low + 1;
+				}
+				return {
+					h: color_hsl.h,
+					s: color_hsl.l,
+					l: n
+				}
+			}
+			// 创建颜色块
+			function creat_color_div(color_arr = []) {
+				var result = document.getElementById("result");
+				var card = document.createElement("div");
+				result.prepend(card);
+				card.className = "card col-12 col-md-6 col-lg-3 p-0 mb-2 color_card";
+				var card_img = document.createElement("div");
+				card.append(card_img);
+				card_img.className = "card-img-top overflow-hidden h-100";
+				var btn = document.createElement("button");
+				card.append(btn);
+				btn.className = "btn-close position-absolute end-0 bg-light";
+				btn.setAttribute("onclick", "close_btn(this);");
+				for (let i = 0; i < color_arr.length; i++) {
+					var div = document.createElement("div");
+					card_img.append(div);
+					div.className = "p-2 small text-center";
+					div.style.backgroundColor = rgbToHex(color_arr[i].r, color_arr[i].g, color_arr[i].b);
+					div.innerText = rgbToHex(color_arr[i].r, color_arr[i].g, color_arr[i].b);
+					div.style.height = 100 / color_arr.length + "%";
+					if (div.innerText == document.getElementById("color_main").value.toUpperCase())
+						div.className += " fw-bolder";
+					if (rgbToHsl(color_arr[i].r, color_arr[i].g, color_arr[i].b).l <= 50) {
+						div.style.color = "#ffffff";
+					}
+				}
+			}
+			// 颜色去重
+			function uniqueColorHsl(arr_hsl) {
+				const colorStringArr = [];
+				const result = [];
+				arr_hsl.forEach(item => {
+					let rgb = hslToRgb(item.h, item.s, item.l)
+					let colorString = rgbToHex(rgb.r, rgb.g, rgb.b);
+					// 判断当前元素是否已存在于结果数组
+					if (colorStringArr.indexOf(colorString) === -1) {
+						colorStringArr.push(colorString);
+						result.push(item);
+					}
+				});
+				return result;
+			}
+
+			function stringToRgb(color) {
+				const div = document.createElement('div');
+				div.style.color = color;
+				div.style.display = 'none';
+				document.body.appendChild(div);
+				const rgbStr = getComputedStyle(div).color;
+				document.body.removeChild(div);
+				const match = rgbStr.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+				if (!match) {
+					throw new Error('无法解析颜色: ' + color);
+				}
+				return {
+					r: parseInt(match[1], 10),
+					g: parseInt(match[2], 10),
+					b: parseInt(match[3], 10)
+				};
+			}
+
+			function rgbToHex(r, g, b) {
+				// 将每个分量转换为两位十六进制，并自动补零
+				const toHex = (c) => {
+					const hex = c.toString(16);
+					return hex.length === 1 ? '0' + hex : hex;
+				};
+				return `#${toHex(r)}${toHex(g)}${toHex(b)}`.toUpperCase(); // 转大写更规范
+			}
+
+			function rgbToHsl(r, g, b) {
+				// 归一化到 [0, 1]
+				r /= 255;
+				g /= 255;
+				b /= 255;
+				const max = Math.max(r, g, b);
+				const min = Math.min(r, g, b);
+				let h, s, l = (max + min) / 2;
+				if (max === min) {
+					h = s = 0; // 灰色
+				} else {
+					const d = max - min;
+					s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+					switch (max) {
+						case r:
+							h = (g - b) / d + (g < b ? 6 : 0);
+							break;
+						case g:
+							h = (b - r) / d + 2;
+							break;
+						case b:
+							h = (r - g) / d + 4;
+							break;
+					}
+					h /= 6;
+				}
+				// 转换为常用单位：色相 0-360，饱和度/明度 0-100
+				return {
+					h: Math.round(h * 360),
+					s: Math.round(s * 100),
+					l: Math.round(l * 100)
+				};
+			}
+
+			function hslToRgb(h, s, l) {
+				// 归一化到 [0, 1]
+				h /= 360;
+				s /= 100;
+				l /= 100;
+				let r, g, b;
+				if (s === 0) {
+					// 灰色
+					r = g = b = l;
+				} else {
+					const hue2rgb = (p, q, t) => {
+						if (t < 0) t += 1;
+						if (t > 1) t -= 1;
+						if (t < 1 / 6) return p + (q - p) * 6 * t;
+						if (t < 1 / 2) return q;
+						if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+						return p;
+					};
+					const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+					const p = 2 * l - q;
+					r = hue2rgb(p, q, h + 1 / 3);
+					g = hue2rgb(p, q, h);
+					b = hue2rgb(p, q, h - 1 / 3);
+				}
+				// 转换回 0-255 并取整
+				return {
+					r: Math.round(r * 255),
+					g: Math.round(g * 255),
+					b: Math.round(b * 255)
+				};
+			}
+
+			function close_btn(e) {
+				e.parentElement.remove();
+			}
+		</script>
+		<style>
+			.color_card {
+				height: 12em;
+				overflow: hidden;
+			}
+
+			.color_card button {
+				opacity: 0;
+			}
+
+			.color_card:hover button {
+				opacity: 100%;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container-xxl my-3">
+			<div class="row">
+				<div class="col-md-4 col-12">
+					<h1 class="m5-3 fw-semibold">宅爷的配色工具箱</h1>
+					<div class="card bg-body-tertiary">
+						<div class="card-body">
+							<span class="form-label">主色调</span>
+							<div class="row mb-3">
+								<div class="col-8">
+									<input type="text" class="form-control" placeholder="#000000" value="#000000"
+										onchange="change_color_main(this);">
+								</div>
+								<div class="col-4">
+									<input type="color" id="color_main"
+										class="form-control form-control-color p-0 w-100"
+										onchange="change_color_main(this);">
+								</div>
+							</div>
+							<div class="input-group mb-3">
+								<span class="input-group-text">颜色数量</span>
+								<input type="number" value="4" min="3" max="7" id="colorNum" class="form-control"
+									placeholder="Username" aria-label="Username" aria-describedby="basic-addon1">
+							</div>
+							<div class="row">
+								<div class="mb-3 col-12">
+									<button class="btn btn-primary w-100" onclick="random()">随机</button>
+								</div>
+								<div class="mb-3 col-6">
+									<button class="btn btn-outline-primary w-100" onclick="random_1()">单色</button>
+								</div>
+								<div class="mb-3 col-6">
+									<button class="btn btn-outline-primary w-100" onclick="random_close()">近似色</button>
+								</div>
+								<div class="mb-3 col-6">
+									<button class="btn btn-outline-primary w-100" onclick="random_square()">四角配色</button>
+								</div>
+								<div class="mb-3 col-6">
+									<button class="btn btn-outline-primary w-100" onclick="random_triangle()">三角配色</button>
+								</div>
+								<div class="col-6">
+									<button class="btn btn-outline-primary w-100" onclick="random_complementary()">互补色</button>
+								</div>
+								<div class="col-6">
+									<button class="btn btn-outline-primary w-100"
+										onclick="random_complementary_2()">分裂互补色</button>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="col-md-8 col-12">
+					<div class="row m-0" id="result">
+						<!-- 随机色卡模板 -->
+						<div class="card col-12 col-md-6 col-lg-4 p-0 mb-2 color_card">
+							<div class="card-img-top overflow-hidden">
+								<div class="p-2 small text-center" style="background-color: aqua;">#123456</div>
+								<div class="p-2 small text-center" style="background-color: aqua;">#123456</div>
+								<div class="p-2 small text-center" style="background-color: aqua;">#123456</div>
+								<div class="p-2 small text-center" style="background-color: aqua;">#123456</div>
+								<div class="p-2 small text-center" style="background-color: aqua;">#123456</div>
+							</div>
+							<button type="button" class="btn-close position-absolute end-0 bg-light"
+								onclick="close_btn(this);"></button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>
